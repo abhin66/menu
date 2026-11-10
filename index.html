@@ -1103,7 +1103,26 @@ window.RESTAURANT = {
     resize();
     window.addEventListener("resize", resize);
 
-    if (reduceMotion) { draw(); return; } // one still frame
+    // Keep the particle field attached to the document's scroll movement.
+    // The canvas stays viewport-sized for performance, while particles shift
+    // with the page so each section reveals a fresh continuation of the network.
+    var previousScrollY = window.scrollY || 0;
+    window.addEventListener("scroll", function () {
+      var currentScrollY = window.scrollY || 0;
+      var delta = currentScrollY - previousScrollY;
+      previousScrollY = currentScrollY;
+      if (!delta || !h) return;
+      for (var i = 0; i < pts.length; i++) {
+        var p = pts[i];
+        p.y -= delta;
+        // Wrap smoothly so the network continues as the visitor moves down/up.
+        while (p.y < -10) p.y += h + 20;
+        while (p.y > h + 10) p.y -= h + 20;
+      }
+      draw();
+    }, { passive: true });
+
+    if (reduceMotion) { draw(); return; } // one still frame, but still follows manual scrolling
 
     var last = 0;
     function frame(t) {
